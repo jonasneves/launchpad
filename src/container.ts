@@ -9,14 +9,30 @@ declare global {
 let instance: WebContainer | null = null;
 let currentProcess: { kill: () => void } | null = null;
 
-// Strip ANSI escape sequences from terminal output
+// Clean terminal output: strip ANSI escapes, handle \r overwrites, drop spinner noise
 const ANSI_RE = /\x1b\[[0-9;]*[a-zA-Z]|\x1b\].*?\x07/g;
-function stripAnsi(text: string): string {
-  return text.replace(ANSI_RE, '');
+const SPINNER_RE = /^[\s\\|/\-–—_]*$/;
+
+function cleanOutput(raw: string): string {
+  // Strip ANSI codes
+  let text = raw.replace(ANSI_RE, '');
+  // \r without \n means "overwrite this line" — keep only the last segment
+  if (text.includes('\r') && !text.includes('\n')) {
+    const parts = text.split('\r');
+    text = parts[parts.length - 1];
+  }
+  // Drop lines that are just spinner frames or whitespace
+  if (SPINNER_RE.test(text.trim())) return '';
+  return text;
 }
 
 function logStream(onLog: (text: string) => void) {
-  return new WritableStream({ write: (data) => onLog(stripAnsi(data)) });
+  return new WritableStream({
+    write: (data) => {
+      const cleaned = cleanOutput(data);
+      if (cleaned) onLog(cleaned);
+    },
+  });
 }
 
 export async function boot(): Promise<WebContainer> {
