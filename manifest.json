@@ -2,7 +2,7 @@
   "name": "Launchpad",
   "short_name": "Launchpad",
   "description": "Run servers and prototypes from local files, entirely in the browser.",
-  "start_url": "/",
+  "start_url": "./",
   "display": "standalone",
   "background_color": "#0a0a0a",
   "theme_color": "#0a0a0a",
